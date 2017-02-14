@@ -27,8 +27,28 @@ maven-eclipse.xml
 *.ipr
 *.iws
 .DS_Store
-*.jar
+#*.jar
 pom.xml.versionsBackup
 
 cq5dam.*
 generated
+
+# User's additional properties
+conf/build*.properties
+# Configured demo machines
+demos/*
+# Logs
+logs/*
+# Some downloaded and added by user data
+dist/acs/*
+dist/apps/*
+dist/bin/aem*.jar
+dist/bin/snapshot.jar
+dist/bin/aem*-sp.zip
+dist/downloads/*.zip
+dist/hotfixes/**/cq-*-hotfix-*.zip
+dist/license/license-*.properties
+dist/osgi/*
+dist/sites/*
+dist/sites-packages/*
+dist/we-retail/*
