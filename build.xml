@@ -1820,10 +1820,12 @@
 	</target>
 	<target name="download_weretail">
 		<echo message="Downloading Latest AEM We.Retail 6.2 packages from GitHub"/>
-		<delete dir="${dist}/we-retail"/>
+		<!--<delete dir="${dist}/we-retail"/>-->
 		<mkdir dir="${dist}/downloads"/>
 		<mkdir dir="${dist}/we-retail/aem62"/>
 		<exec executable="curl">
+			<!-- TODO rewrite ${temporaryPlace} ${finishPlace} -->
+			<arg line="-R -C - -z '${dist}/we-retail/aem62/we.retail.all-${demo.download.weretail.all}.zip'"/>
 			<arg line="-L -s -k -o '${dist}/downloads/we.retail.all-${demo.download.weretail.all}.zip' https://github.com/Adobe-Marketing-Cloud/aem-sample-we-retail/releases/download/we.retail-${demo.download.weretail.all}/we.retail.all-${demo.download.weretail.all}.zip"/>
 		</exec>
 		<move todir="${dist}/we-retail/aem62">
@@ -1849,7 +1851,7 @@
 	<!-- Target for downloading all packages for a given area -->
 	<target name="download_packageshare">
 		<echo message="Downloading latest AEM ${packageshare.capability} packages from PackageShare"/>
-		<delete dir="${packageshare.target}"/>
+		<!--<delete dir="${packageshare.target}"/>-->
 		<propertyselector property="constituents" match="demo.download.${packageshare.capability}.([^\.]*).core" select="\1" casesensitive="false"/>
 		<if>
 			<and>
@@ -1938,9 +1940,10 @@
 					<arg line="https://www.adobeaemcloud.com/apps/cloudmgr/content/packages/user.json"/>
 				</exec>
 				<mkdir dir="${dist}/downloads"/>
-				<exec executable="curl">
-					<arg line="--cookie '${logs}/packageshare.txt' -L -s -k -o '${dist}/downloads/${packageShareFileName}.zip' https://www.adobeaemcloud.com${filepath}/jcr:content/package/file.res/${packageShareFileName}.zip"/>
-				</exec>
+
+				<property name="downloadUrl"
+						  value="https://www.adobeaemcloud.com${filepath}/jcr:content/package/file.res/${packageShareFileName}.zip"/>
+				<property name="temporaryPlace" value="${dist}/downloads/${packageShareFileName}.zip"/>
 				<if>
 					<and>
 						<isset property="${packageshare.filename}"/>
@@ -1950,10 +1953,51 @@
 					</and>
 					<then>
 						<propertycopy property="filename" from="${packageshare.filename}"/>
-						<move file="${dist}/downloads/${packageShareFileName}.zip" tofile="${packageshare.target}/${fileversion}/${filename}" overwrite="true"/>
+						<property name="finishPlace" value="${packageshare.target}/${fileversion}/${filename}"/>
 					</then>
 					<else>
-						<move file="${dist}/downloads/${packageShareFileName}.zip" tofile="${packageshare.target}/${fileversion}/${packageShareFileName}.zip" overwrite="true"/>
+						<property name="finishPlace"
+								  value="${packageshare.target}/${fileversion}/${packageShareFileName}.zip"/>
+					</else>
+				</if>
+				<exec executable="curl" resultproperty="curlResult" outputproperty="curlOutput">
+					<redirector output="con" alwayslog="true"/>
+					<arg line="-R -C - -z '${finishPlace}'"/>
+					<arg line="--cookie '${logs}/packageshare.txt' -L -s -k"/>
+					<arg line="-o '${temporaryPlace}'"/>
+					<arg line="${downloadUrl}"/>
+				</exec>
+				<if>
+					<or>
+						<!-- No errors -->
+						<equals arg1="${curlResult}" arg2="0"/>
+						<!-- Hasn't been downloaded recently (-z param) -->
+						<equals arg1="${curlResult}" arg2="33"/>
+					</or>
+					<then>
+						<if>
+							<resourceexists>
+								<file file="${temporaryPlace}"/>
+							</resourceexists>
+							<then>
+								<move file="${temporaryPlace}" tofile="${finishPlace}" overwrite="true"/>
+							</then>
+							<else>
+								<if>
+									<!-- Hasn't been downloaded recently (-z param) -->
+									<equals arg1="${curlResult}" arg2="33"/>
+									<then>
+										<fail message="Error while downloading the file: ${curlOutput}"/>
+									</then>
+									<else>
+										<echo message="File hasn't been downloaded - you do have latest version."/>
+									</else>
+								</if>
+							</else>
+						</if>
+					</then>
+					<else>
+						<fail message="Error while downloading the file: ${curlOutput}"/>
 					</else>
 				</if>
 			</else>
@@ -2101,7 +2145,7 @@
 	</target>
 	<!-- Target for downloading latest Commerce (EP) bundles -->
 	<target name="download_commerce_ep">
-		<delete dir="${dist}/commerce"/>
+		<!--<delete dir="${dist}/commerce"/>-->
 		<antcall target="download_packageshare">
 			<param name="packageshare.capability" value="commerce-ep"/>
 			<param name="packageshare.target" value="${dist}/commerce"/>
@@ -2109,7 +2153,7 @@
 	</target>
 	<!-- Target for downloading latest Commerce (WebSphere) bundles -->
 	<target name="download_commerce_websphere">
-		<delete dir="${dist}/commerce"/>
+		<!--<delete dir="${dist}/commerce"/>-->
 		<antcall target="download_packageshare">
 			<param name="packageshare.capability" value="commerce-was"/>
 			<param name="packageshare.target" value="${dist}/commerce"/>
@@ -2189,7 +2233,7 @@
 	</target>
 	<!-- Target for downloading the ACS commons and tools -->
 	<target name="download_acs">
-		<delete dir="${dist}/acs"/>
+		<!--<delete dir="${dist}/acs"/>-->
 		<mkdir dir="${dist}/acs"/>
 		<echo message="Downloading latest AEM ACS tools and commons"/>
 		<propertyselector property="constituents" match="demo.download.acs.([^\.]*).core" select="\1" casesensitive="false"/>
@@ -2218,12 +2262,13 @@
 		<basename property="this.name" file="${this.filepath}"/>
 		<echo message="Downloading ${this.name}"/>
 		<exec executable="curl">
+			<!-- TODO add curl params -->
 			<arg line="--cookie '${logs}/acs.txt' -L -s -k -o '${dist}/acs/${this.version}/${this.name}' ${this.filepath}"/>
 		</exec>
 	</target>
 	<!-- Target for downloading the OSGI commons -->
 	<target name="download_osgi">
-		<delete dir="${dist}/osgi"/>
+		<!--<delete dir="${dist}/osgi"/>-->
 		<mkdir dir="${dist}/osgi"/>
 		<echo message="Downloading latest OSGI hotfixes Apache mirrors"/>
 		<propertyselector property="constituents" match="demo.download.osgi.([^\.]*).core" select="\1" casesensitive="false"/>
@@ -2254,6 +2299,7 @@
 		<basename property="this.name" file="${this.filepath}"/>
 		<echo message="Downloading ${this.name}"/>
 		<exec executable="curl">
+			<!-- TODO add curl params -->
 			<arg line="--cookie '${logs}/osgi.txt' -L -s -k -o '${dist}/osgi/${this.version}/${this.name}' ${this.filepath}"/>
 		</exec>
 		<echo file="${dist}/osgi/${this.version}/${this.name}.properties" append="false">startlevel=${this.startlevel}</echo>
