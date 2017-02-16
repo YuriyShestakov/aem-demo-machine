@@ -42,10 +42,16 @@ logs/*
 # Some downloaded and added by user data
 dist/acs/*
 dist/apps/*
+dist/apps-packages/**/*.zip
+dist/assets/**/*.zip
+dist/assets-packages/**/*.zip
 dist/bin/aem*.jar
-dist/bin/snapshot.jar
 dist/bin/aem*-sp.zip
+dist/bin/snapshot.jar
 dist/downloads/*.zip
+dist/forms/**/*.zip
+dist/forms-demo/**/*.zip
+dist/forms-packages/**/*.zip
 dist/hotfixes/**/cq-*-hotfix-*.zip
 dist/license/license-*.properties
 dist/osgi/*
