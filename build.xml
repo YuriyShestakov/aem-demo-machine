@@ -21,6 +21,8 @@
 	<property name="james" location="./james"/>
 	<property name="archives" location="./archives"/>
 	<property name="bin" location="./bin"/>
+	<!-- Default options for curl command execution -->
+	<property name="defaultCurlOptions" value="--remote-time --location --silent --show-error --compressed"/>
 	<!-- This file requires the ant-contrib-1.0b3.jar file to be in the ant/lib folder -->
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
 	<description>
@@ -1003,7 +1005,10 @@
 		<mkdir dir="${dist}/downloads"/>
 		<echo message="Downloading http://archive.apache.org/dist/lucene/solr/${demo.solr}/solr-${demo.solr}.tgz"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/solr.tgz' http://archive.apache.org/dist/lucene/solr/${demo.solr}/solr-${demo.solr}.tgz"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/solr.tgz'"/>
+			<arg line="http://archive.apache.org/dist/lucene/solr/${demo.solr}/solr-${demo.solr}.tgz"/>
 		</exec>
 	</target>
 	<!-- Target for installing the SOLR software -->
@@ -1112,11 +1117,15 @@
 		<echo message="Downloading the SOLR schema from /libs/social/config/datastore/msrp"/>
 		<exec executable="curl">
 			<arg line="-u admin:${demo.admin.password}"/>
-			<arg line="-s -o '${dist}/community/solr/schema.xml' http://${demo.host}:${demomachine.authorport}/libs/social/config/datastore/msrp/solr4/schema.xml"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/community/solr/schema.xml'"/>
+			<arg line="http://${demo.host}:${demomachine.authorport}/libs/social/config/datastore/msrp/solr4/schema.xml"/>
 		</exec>
 		<exec executable="curl">
 			<arg line="-u admin:${demo.admin.password}"/>
-			<arg line="-s -o '${dist}/community/solr/solrconfig.xml' http://${demo.host}:${demomachine.authorport}/libs/social/config/datastore/msrp/solr4/solrconfig.xml"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/community/solr/solrconfig.xml'"/>
+			<arg line="http://${demo.host}:${demomachine.authorport}/libs/social/config/datastore/msrp/solr4/solrconfig.xml"/>
 		</exec>
 	</target>
 	<!-- Target for stopping the JAMES smtp server -->
@@ -1259,7 +1268,9 @@
 		<echo message="Downloading the MySQL schema from /libs/social/config/${mysql.schema}/${mysql.file}.sql"/>
 		<exec executable="curl">
 			<arg line="-u admin:${demo.admin.password}"/>
-			<arg line="-s -o '${mysql.path}/${mysql.file}.sql' http://${demo.host}:${demomachine.authorport}/libs/social/config/${mysql.schema}/${mysql.file}.sql"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${mysql.path}/${mysql.file}.sql'"/>
+			<arg line="http://${demo.host}:${demomachine.authorport}/libs/social/config/${mysql.schema}/${mysql.file}.sql"/>
 		</exec>
 		<replace file="${mysql.path}/${mysql.file}.sql" token="enablementdb" value="${mysql.prefix}${mysql.schema}"/>
 		<replace file="${mysql.path}/${mysql.file}.sql" token="ScormEngineDB" value="${mysql.prefix}${mysql.schema}"/>
@@ -1707,7 +1718,10 @@
 		<echo message="Downloading AEM 6.2"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -L -o '${dist}/downloads/aem62.jar' ${demo.download.aem.artifactory}${demo.download.aem.62}"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/aem62.jar'"/>
+			<arg line="${demo.download.aem.artifactory}${demo.download.aem.62}"/>
 		</exec>
 		<echo message="AEM 6.2 successfully downloaded in /dist/bin"/>
 		<move file="${dist}/downloads/aem62.jar" todir="${dist}/bin"/>
@@ -1716,7 +1730,10 @@
 		<echo message="Downloading AEM 6.1"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -L -o '${dist}/downloads/aem61.jar' ${demo.download.aem.artifactory}${demo.download.aem.61}"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/aem61.jar'"/>
+			<arg line="${demo.download.aem.artifactory}${demo.download.aem.61}"/>
 		</exec>
 		<echo message="AEM 6.1 successfully downloaded in /dist/bin"/>
 		<move file="${dist}/downloads/aem61.jar" todir="${dist}/bin"/>
@@ -1725,7 +1742,10 @@
 		<echo message="Downloading AEM 6.0"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -L -o '${dist}/downloads/aem60.jar' ${demo.download.aem.artifactory}${demo.download.aem.60}"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/aem60.jar'"/>
+			<arg line="${demo.download.aem.artifactory}${demo.download.aem.60}"/>
 		</exec>
 		<echo message="AEM 6.0 successfully downloaded in /dist/bin"/>
 		<move file="${dist}/downloads/aem60.jar" todir="${dist}/bin"/>
@@ -1734,7 +1754,10 @@
 		<echo message="Downloading CQ 5.6.1"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -L -o '${dist}/downloads/cq561.jar' ${demo.download.aem.artifactory}${demo.download.aem.561}"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/cq561.jar'"/>
+			<arg line="${demo.download.aem.artifactory}${demo.download.aem.561}"/>
 		</exec>
 		<echo message="CQ 5.6.1 successfully downloaded in /dist/bin"/>
 		<move file="${dist}/downloads/cq561.jar" todir="${dist}/bin"/>
@@ -1743,7 +1766,10 @@
 		<echo message="Downloading CQ 5.6"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -L -o '${dist}/downloads/cq56.jar' ${demo.download.aem.artifactory}${demo.download.aem.56}"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/cq56.jar'"/>
+			<arg line="${demo.download.aem.artifactory}${demo.download.aem.56}"/>
 		</exec>
 		<echo message="CQ 5.6 successfully downloaded in /dist/bin"/>
 		<move file="${dist}/downloads/cq56.jar" todir="${dist}/bin"/>
@@ -1807,13 +1833,19 @@
 	</target>
 	<target name="download_google">
 		<exec executable="curl">
-			<arg line="--cookie-jar '${dist}/downloads/google.txt' -s -k -o '${dist}/downloads/google.html' https://drive.google.com/uc?export=download&amp;id=${google.id}"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--cookie-jar '${dist}/downloads/google.txt'"/>
+			<arg line="--output '${dist}/downloads/google.html'"/>
+			<arg line="https://drive.google.com/uc?export=download&amp;id=${google.id}"/>
 		</exec>
 		<loadfile property="googleFile" srcFile="${dist}/downloads/google.html"/>
 		<propertyregex property="confirmCode" input="${googleFile}" regexp="confirm=([-a-zA-Z0-9_]*)" select="\1"/>
 		<echo message="Download in progress, please wait until build is successful"/>
 		<exec executable="curl">
-			<arg line="--cookie '${dist}/downloads/google.txt' -L -s -k -o '${dist}/downloads/${google.file}.zip' https://drive.google.com/uc?export=download&amp;confirm=${confirmCode}&amp;id=${google.id}"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--cookie '${dist}/downloads/google.txt'"/>
+			<arg line="--output '${dist}/downloads/${google.file}.zip'"/>
+			<arg line="https://drive.google.com/uc?export=download&amp;confirm=${confirmCode}&amp;id=${google.id}"/>
 		</exec>
 		<delete file="${dist}/downloads/google.txt"/>
 		<delete file="${dist}/downloads/google.html"/>
@@ -1824,9 +1856,13 @@
 		<mkdir dir="${dist}/downloads"/>
 		<mkdir dir="${dist}/we-retail/aem62"/>
 		<exec executable="curl">
-			<!-- TODO rewrite ${temporaryPlace} ${finishPlace} -->
-			<arg line="-R -C - -z '${dist}/we-retail/aem62/we.retail.all-${demo.download.weretail.all}.zip'"/>
-			<arg line="-L -s -k -o '${dist}/downloads/we.retail.all-${demo.download.weretail.all}.zip' https://github.com/Adobe-Marketing-Cloud/aem-sample-we-retail/releases/download/we.retail-${demo.download.weretail.all}/we.retail.all-${demo.download.weretail.all}.zip"/>
+			<!-- TODO rewrite ${temporaryPlace} ${finishPlace} -time-cond -->
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--insecure"/>
+			<!--<arg line="&#45;&#45;time-cond '${dist}/we-retail/aem62/we.retail.all-${demo.download.weretail.all}.zip'"/>-->
+			<arg line="--output '${dist}/downloads/we.retail.all-${demo.download.weretail.all}.zip'"/>
+			<arg line="https://github.com/Adobe-Marketing-Cloud/aem-sample-we-retail/releases/download/we.retail-${demo.download.weretail.all}/we.retail.all-${demo.download.weretail.all}.zip"/>
 		</exec>
 		<move todir="${dist}/we-retail/aem62">
 			<fileset dir="${dist}/downloads">
@@ -1836,10 +1872,18 @@
 		<echo message="Downloading Latest AEM We.Retail 6.3 packages from GitHub"/>
 		<mkdir dir="${dist}/we-retail/aem63"/>
 		<exec executable="curl">
-			<arg line="-L -s -k -o '${dist}/downloads/we.retail.communities.ui.apps-${demo.download.weretail.source}.zip' https://github.com/Adobe-Marketing-Cloud/aem-sample-we-retail-communities/releases/download/v${demo.download.weretail.source}/we.retail.communities.ui.apps-${demo.download.weretail.source}.zip"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--insecure"/>
+			<arg line="--output '${dist}/downloads/we.retail.communities.ui.apps-${demo.download.weretail.source}.zip'"/>
+			<arg line="https://github.com/Adobe-Marketing-Cloud/aem-sample-we-retail-communities/releases/download/v${demo.download.weretail.source}/we.retail.communities.ui.apps-${demo.download.weretail.source}.zip"/>
 		</exec>
 		<exec executable="curl">
-			<arg line="-L -s -k -o '${dist}/downloads/we.retail.communities.ui.content-${demo.download.weretail.source}.zip' https://github.com/Adobe-Marketing-Cloud/aem-sample-we-retail-communities/releases/download/v${demo.download.weretail.source}/we.retail.communities.ui.content-${demo.download.weretail.source}.zip"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--insecure"/>
+			<arg line="--output '${dist}/downloads/we.retail.communities.ui.content-${demo.download.weretail.source}.zip'"/>
+			<arg line="https://github.com/Adobe-Marketing-Cloud/aem-sample-we-retail-communities/releases/download/v${demo.download.weretail.source}/we.retail.communities.ui.content-${demo.download.weretail.source}.zip"/>
 		</exec>
 		<move todir="${dist}/we-retail/aem63">
 			<fileset dir="${dist}/downloads">
@@ -1893,7 +1937,7 @@
 				<exec executable="curl">
 					<arg line="--output '${logs}/download_packageshare.html'"/>
 					<arg line="--cookie-jar '${logs}/packageshare.txt'"/>
-					<arg line="-k"/>
+					<arg line="--insecure"/>
 					<arg line="-X POST"/>
 					<arg line="-d j_validate=true"/>
 					<arg line="-d j_username=${AdobeID.user}"/>
@@ -1916,7 +1960,11 @@
 				<mkdir dir="${packageshare.target}/${fileversion}"/>
 				<echo message="Download in progress, please wait until it is complete"/>
 				<exec executable="curl">
-					<arg line="--cookie '${logs}/packageshare.txt' -L -s -k -o '${logs}/packageshare.html' https://www.adobeaemcloud.com/content/marketplace/marketplaceProxy.html?packagePath=${filepath}"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--insecure"/>
+					<arg line="--cookie '${logs}/packageshare.txt'"/>
+					<arg line="--output '${logs}/packageshare.html'"/>
+					<arg line="https://www.adobeaemcloud.com/content/marketplace/marketplaceProxy.html?packagePath=${filepath}"/>
 				</exec>
 				<if>
 					<resourcecontains resource="${logs}/packageshare.html" substring="an error occurred while processing your request"/>
@@ -1932,7 +1980,7 @@
 				<exec executable="curl">
 					<arg line="--output '${logs}/download_packageshare_eula.html'"/>
 					<arg line="--cookie '${logs}/packageshare.txt'"/>
-					<arg line="-k"/>
+					<arg line="--insecure"/>
 					<arg line="-X POST"/>
 					<arg line="-d acceptEula=on"/>
 					<arg line="-d cmd=eula"/>
@@ -1962,9 +2010,11 @@
 				</if>
 				<exec executable="curl" resultproperty="curlResult" outputproperty="curlOutput">
 					<redirector output="con" alwayslog="true"/>
-					<arg line="-R -C - -z '${finishPlace}'"/>
-					<arg line="--cookie '${logs}/packageshare.txt' -L -s -k"/>
-					<arg line="-o '${temporaryPlace}'"/>
+					<arg line="--continue-at -"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--time-cond '${finishPlace}'"/>
+					<arg line="--cookie '${logs}/packageshare.txt'"/>
+					<arg line="--output '${temporaryPlace}'"/>
 					<arg line="${downloadUrl}"/>
 				</exec>
 				<if>
@@ -2008,7 +2058,11 @@
 		<mkdir dir="${dist}/downloads"/>
 		<echo message="Downloading cq-quickstart-${demo.load}.jar"/>
 		<exec executable="curl">
-			<arg line="-s -k -o '${dist}/downloads/${demo.load}.jar' ${demo.download.aem.artifactory}/artifactory/maven-aem-release-local/com/day/cq/cq-quickstart/${demo.load}/cq-quickstart-${demo.load}.jar"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--insecure"/>
+			<arg line="--output '${dist}/downloads/${demo.load}.jar'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-release-local/com/day/cq/cq-quickstart/${demo.load}/cq-quickstart-${demo.load}.jar"/>
 		</exec>
 		<echo message="AEM Load downloaded as ${demo.load}.jar in /dist/bin"/>
 		<move file="${dist}/downloads/${demo.load}.jar" todir="${dist}/bin" overwrite="true"/>
@@ -2018,19 +2072,27 @@
 		<echo message="Downloading a AEM QuickStart snapshot build ${demo.snapshot}"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/maven-metadata.xml' ${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/maven-metadata.xml"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/maven-metadata.xml'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/maven-metadata.xml"/>
 		</exec>
 		<xmlproperty file="${dist}/downloads/maven-metadata.xml"/>
 		<if>
 			<equals arg1="${demo.snapshot}" arg2="latest" casesensitive="false"/>
 			<then>
 				<exec executable="curl">
-					<arg line="-s -k -o '${dist}/downloads/maven-metadata-snapshot.xml' ${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/${metadata.versioning.latest}/maven-metadata.xml"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--insecure"/>
+					<arg line="--output '${dist}/downloads/maven-metadata-snapshot.xml'"/>
+					<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/${metadata.versioning.latest}/maven-metadata.xml"/>
 				</exec>
 			</then>
 			<else>
 				<exec executable="curl">
-					<arg line="-s -k -o '${dist}/downloads/maven-metadata-snapshot.xml' ${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/${demo.snapshot}/maven-metadata.xml"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--insecure"/>
+					<arg line="--output '${dist}/downloads/maven-metadata-snapshot.xml'"/>
+					<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/${demo.snapshot}/maven-metadata.xml"/>
 				</exec>
 			</else>
 		</if>
@@ -2039,7 +2101,10 @@
 			<then>
 				<echo message="Downloading cq-quickstart-${demo.snapshot}.jar"/>
 				<exec executable="curl">
-					<arg line="-s -k -o '${dist}/downloads/snapshot.jar' ${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/${demo.snapshot}/cq-quickstart-${demo.snapshot}.jar"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--insecure"/>
+					<arg line="--output '${dist}/downloads/snapshot.jar'"/>
+					<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/${demo.snapshot}/cq-quickstart-${demo.snapshot}.jar"/>
 				</exec>
 			</then>
 			<else>
@@ -2047,7 +2112,10 @@
 				<propertyregex property="snapshotfile" input="${metadata.versioning.snapshotVersions.snapshotVersion.value}" regexp="(^\b.*?)," select="\1" casesensitive="false"/>
 				<echo message="Downloading cq-quickstart-${snapshotfile}.jar"/>
 				<exec executable="curl">
-					<arg line="-s -k -o '${dist}/downloads/snapshot.jar' ${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/${demo.snapshot}/cq-quickstart-${snapshotfile}.jar"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--insecure"/>
+					<arg line="--output '${dist}/downloads/snapshot.jar'"/>
+					<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-snapshot-local/com/day/cq/cq-quickstart/${demo.snapshot}/cq-quickstart-${snapshotfile}.jar"/>
 				</exec>
 			</else>
 		</if>
@@ -2092,7 +2160,10 @@
 				<echo message="Downloading Mongo DB for MacOS"/>
 				<echo message="Downloading https://fastdl.mongodb.org/osx/${demo.mongo}.tgz"/>
 				<exec executable="curl">
-					<arg line="-s -o '${dist}/downloads/mongodb.tgz' https://fastdl.mongodb.org/osx/${demo.mongo}.tgz"/>
+					<arg line="--continue-at -"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--output '${dist}/downloads/mongodb.tgz'"/>
+					<arg line="https://fastdl.mongodb.org/osx/${demo.mongo}.tgz"/>
 				</exec>
 			</then>
 			<else>
@@ -2106,7 +2177,10 @@
 		<mkdir dir="${dist}/downloads"/>
 		<echo message="Downloading  http://archive.apache.org/dist/james/apache-james/3.0${demo.emailserver.version}/apache-james-3.0-${demo.emailserver.version}-app.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/james.zip' http://archive.apache.org/dist/james/apache-james/3.0${demo.emailserver.version}/apache-james-3.0-${demo.emailserver.version}-app.zip"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/james.zip'"/>
+			<arg line="http://archive.apache.org/dist/james/apache-james/3.0${demo.emailserver.version}/apache-james-3.0-${demo.emailserver.version}-app.zip"/>
 		</exec>
 	</target>
 	<!-- Target for downloading the MySQL software -->
@@ -2118,7 +2192,10 @@
 				<echo message="Downloading MySQL DB for MacOS"/>
 				<echo message="Downloading http://cdn.mysql.com/Downloads/MySQL-5.6/mysql-${demo.mysql}.tar.gz"/>
 				<exec executable="curl">
-					<arg line="-s -o '${dist}/downloads/mysql.tgz' http://cdn.mysql.com/Downloads/MySQL-5.6/mysql-${demo.mysql}.tar.gz"/>
+					<arg line="--continue-at -"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--output '${dist}/downloads/mysql.tgz'"/>
+					<arg line="http://cdn.mysql.com/Downloads/MySQL-5.6/mysql-${demo.mysql}.tar.gz"/>
 				</exec>
 			</then>
 			<else>
@@ -2135,7 +2212,10 @@
 				<echo message="Downloading FFMpeg for MacOS"/>
 				<echo message="Downloading ${demo.ffmpeg}"/>
 				<exec executable="curl">
-					<arg line="-s -o '${dist}/downloads/ffmpeg.zip' ${demo.ffmpeg}"/>
+					<arg line="--continue-at -"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--output '${dist}/downloads/ffmpeg.zip'"/>
+					<arg line="${demo.ffmpeg}"/>
 				</exec>
 			</then>
 			<else>
@@ -2262,8 +2342,13 @@
 		<basename property="this.name" file="${this.filepath}"/>
 		<echo message="Downloading ${this.name}"/>
 		<exec executable="curl">
-			<!-- TODO add curl params -->
-			<arg line="--cookie '${logs}/acs.txt' -L -s -k -o '${dist}/acs/${this.version}/${this.name}' ${this.filepath}"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--insecure"/>
+			<arg line="--cookie '${logs}/acs.txt'"/>
+			<arg line="--time-cond '${dist}/acs/${this.version}/${this.name}'"/>
+			<arg line="--output '${dist}/acs/${this.version}/${this.name}'"/>
+			<arg line="${this.filepath}"/>
 		</exec>
 	</target>
 	<!-- Target for downloading the OSGI commons -->
@@ -2299,8 +2384,13 @@
 		<basename property="this.name" file="${this.filepath}"/>
 		<echo message="Downloading ${this.name}"/>
 		<exec executable="curl">
-			<!-- TODO add curl params -->
-			<arg line="--cookie '${logs}/osgi.txt' -L -s -k -o '${dist}/osgi/${this.version}/${this.name}' ${this.filepath}"/>
+			<arg line="--continue-at -"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--insecure"/>
+			<arg line="--cookie '${logs}/osgi.txt'"/>
+			<arg line="--time-cond '${dist}/osgi/${this.version}/${this.name}'"/>
+			<arg line="--output '${dist}/osgi/${this.version}/${this.name}'"/>
+			<arg line="${this.filepath}"/>
 		</exec>
 		<echo file="${dist}/osgi/${this.version}/${this.name}.properties" append="false">startlevel=${this.startlevel}</echo>
 	</target>
@@ -2315,33 +2405,45 @@
 		<echo message="Downloading latest Communities bundles for various versions (service packs and feature packs)"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/nexus.xml' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/maven-metadata.xml"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/nexus.xml'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/maven-metadata.xml"/>
 		</exec>
 		<xmlproperty file="${dist}/downloads/nexus.xml"/>
 		<propertyregex property="latest17" input="${metadata.versioning.versions.version}" regexp="(.*)(1\.7\.)([0-9]*)(\,1\.^7\.[0-9]*)*" select="\3"/>
 		<echo message="Downloading cq-socialcommunities-pkg-1.7.${latest17}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/communities-aem61-release.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.7.${latest17}/cq-socialcommunities-pkg-1.7.${latest17}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/communities-aem61-release.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.7.${latest17}/cq-socialcommunities-pkg-1.7.${latest17}.zip"/>
 		</exec>
 		<propertyregex property="latest18" input="${metadata.versioning.versions.version}" regexp="(.*)(1\.8\.)([0-9]*)(\,1\.^8\.[0-9]*)*" select="\3"/>
 		<echo message="Downloading cq-socialcommunities-pkg-1.8.${latest18}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/communities-aem61-latest.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.8.${latest18}/cq-socialcommunities-pkg-1.8.${latest18}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/communities-aem61-latest.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.8.${latest18}/cq-socialcommunities-pkg-1.8.${latest18}.zip"/>
 		</exec>
 		<propertyregex property="latest19" input="${metadata.versioning.versions.version}" regexp="(.*)(1\.9\.)([0-9]*)(\,1\.^9\.[0-9]*)*" select="\3"/>
 		<echo message="Downloading cq-socialcommunities-pkg-1.9.${latest19}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/communities-aem62-release.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.9.${latest19}/cq-socialcommunities-pkg-1.9.${latest19}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/communities-aem62-release.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.9.${latest19}/cq-socialcommunities-pkg-1.9.${latest19}.zip"/>
 		</exec>
 		<propertyregex property="latest110" input="${metadata.versioning.versions.version}" regexp="(.*)(1\.10\.)([0-9]*)(\,1\.^9\.[0-9]*)*" select="\3"/>
 		<echo message="Downloading cq-socialcommunities-pkg-1.10.${latest110}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/communities-aem62-latest.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.10.${latest110}/cq-socialcommunities-pkg-1.10.${latest110}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/communities-aem62-latest.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.10.${latest110}/cq-socialcommunities-pkg-1.10.${latest110}.zip"/>
 		</exec>
 		<propertyregex property="latest111" input="${metadata.versioning.versions.version}" regexp="(.*)(1\.11\.)([0-9]*)(\,1\.^9\.[0-9]*)*" select="\3"/>
 		<echo message="Downloading cq-socialcommunities-pkg-1.11.${latest111}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/communities-aem63-release.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.11.${latest111}/cq-socialcommunities-pkg-1.11.${latest111}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/communities-aem63-release.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-socialcommunities-pkg/1.11.${latest111}/cq-socialcommunities-pkg-1.11.${latest111}.zip"/>
 		</exec>
 		<delete>
 			<fileset dir="${dist}/downloads" includes="*.xml"/>
@@ -2352,12 +2454,16 @@
 		<echo message="Downloading latest advanced scoring package"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/nexus.xml' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-expert-identification-pkg/maven-metadata.xml"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/nexus.xml'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-expert-identification-pkg/maven-metadata.xml"/>
 		</exec>
 		<xmlproperty file="${dist}/downloads/nexus.xml"/>
 		<echo message="Downloading cq-social-expert-identification-pkg-${metadata.versioning.release}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/cq-social-expert-identification-pkg.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-expert-identification-pkg/${metadata.versioning.release}/cq-social-expert-identification-pkg-${metadata.versioning.release}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/cq-social-expert-identification-pkg.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-expert-identification-pkg/${metadata.versioning.release}/cq-social-expert-identification-pkg-${metadata.versioning.release}.zip"/>
 		</exec>
 	</target>
 	<!-- Target for downloading latest Scorm bundle -->
@@ -2365,22 +2471,30 @@
 		<echo message="Downloading latest SCORM bundle"/>
 		<mkdir dir="${dist}/downloads"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/nexus.xml' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-scorm-pkg/maven-metadata.xml"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/nexus.xml'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-scorm-pkg/maven-metadata.xml"/>
 		</exec>
 		<xmlproperty file="${dist}/downloads/nexus.xml"/>
 		<propertyregex property="latest10" input="${metadata.versioning.versions.version}" regexp="(.*)(1\.0\.)([0-9]*)(\,1\.^0\.[0-9]*)*" select="\3"/>
 		<echo message="Downloading cq-social-scorm-pkg-1.0.${latest10}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/cq-social-scorm-pkg-aem61.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-scorm-pkg/1.0.${latest10}/cq-social-scorm-pkg-1.0.${latest10}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/cq-social-scorm-pkg-aem61.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-scorm-pkg/1.0.${latest10}/cq-social-scorm-pkg-1.0.${latest10}.zip"/>
 		</exec>
 		<echo message="Downloading cq-social-scorm-pkg-1.0.${latest10}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/cq-social-scorm-pkg-aem62.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-scorm-pkg/1.0.${latest10}/cq-social-scorm-pkg-1.0.${latest10}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/cq-social-scorm-pkg-aem62.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-scorm-pkg/1.0.${latest10}/cq-social-scorm-pkg-1.0.${latest10}.zip"/>
 		</exec>
 		<propertyregex property="latest11" input="${metadata.versioning.versions.version}" regexp="(.*)(1\.1\.)([0-9]*)(\,1\.^1\.[0-9]*)*" select="\3"/>
 		<echo message="Downloading cq-social-scorm-pkg-1.1.${latest11}.zip"/>
 		<exec executable="curl">
-			<arg line="-s -o '${dist}/downloads/cq-social-scorm-pkg-aem63.zip' ${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-scorm-pkg/1.1.${latest11}/cq-social-scorm-pkg-1.1.${latest11}.zip"/>
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${dist}/downloads/cq-social-scorm-pkg-aem63.zip'"/>
+			<arg line="${demo.download.aem.artifactory}/artifactory/maven-aem-dev/com/adobe/cq/social/cq-social-scorm-pkg/1.1.${latest11}/cq-social-scorm-pkg-1.1.${latest11}.zip"/>
 		</exec>
 		<delete>
 			<fileset dir="${dist}/downloads" includes="*.xml"/>
@@ -3830,7 +3944,7 @@
 			<then>
 				<!-- Locating the FFMPEG transcoding task -->
 				<exec executable="curl">
-					<arg line="-o '${logs}/${port}_assets_damupdateworkflow.json'"/>
+					<arg line="--output '${logs}/${port}_assets_damupdateworkflow.json'"/>
 					<arg line="-u admin:${demo.admin.password}"/>
 					<arg line="http://${demo.host}:${port}/etc/workflow/models/dam/update_asset/_jcr_content/flow.infinity.json"/>
 				</exec>
@@ -5219,7 +5333,8 @@
 				<!-- Identifying the configuration to update -->
 				<exec executable="curl">
 					<arg line="-u admin:${demo.admin.password}"/>
-					<arg line="-o '${logs}/${demomachine.publishport}_components.json' http://${demo.host}:${demomachine.publishport}/system/console/configMgr"/>
+					<arg line="--output '${logs}/${demomachine.publishport}_components.json'"/>
+					<arg line="http://${demo.host}:${demomachine.publishport}/system/console/configMgr"/>
 				</exec>
 				<loadfile property="subscription.list" srcFile="${logs}/${demomachine.publishport}_components.json"/>
 				<propertyregex property="subscription.id" input="${subscription.list}" regexp="EmailReplyConfigurationImpl.([-a-zA-Z0-9_/]*)&quot;" select="\1"/>
@@ -5227,7 +5342,8 @@
 				<echo message="First email configuration ID: ${subscription.id}"/>
 				<exec executable="curl">
 					<arg line="-u admin:${demo.admin.password}"/>
-					<arg line="-o '${logs}/${demomachine.publishport}_components_email1.json' http://${demo.host}:${demomachine.publishport}/system/console/configMgr/com.adobe.cq.social.commons.emailreply.impl.EmailReplyConfigurationImpl.${subscription.id}.json"/>
+					<arg line="--output '${logs}/${demomachine.publishport}_components_email1.json'"/>
+					<arg line="http://${demo.host}:${demomachine.publishport}/system/console/configMgr/com.adobe.cq.social.commons.emailreply.impl.EmailReplyConfigurationImpl.${subscription.id}.json"/>
 				</exec>
 				<!-- Fixing up first configuration component -->
 				<if>
@@ -5250,7 +5366,8 @@
 				<echo message="Second email configuration ID: ${email.id}"/>
 				<exec executable="curl">
 					<arg line="-u admin:${demo.admin.password}"/>
-					<arg line="-o '${logs}/${demomachine.publishport}_components_email2.json' http://${demo.host}:${demomachine.publishport}/system/console/configMgr/com.adobe.cq.social.commons.emailreply.impl.EmailReplyConfigurationImpl.${email.id}.json"/>
+					<arg line="--output '${logs}/${demomachine.publishport}_components_email2.json'"/>
+					<arg line="http://${demo.host}:${demomachine.publishport}/system/console/configMgr/com.adobe.cq.social.commons.emailreply.impl.EmailReplyConfigurationImpl.${email.id}.json"/>
 				</exec>
 				<!-- Fixing up second configuration component -->
 				<if>
@@ -5439,7 +5556,9 @@
 				<echo message="Downloading the MySQL schema from /libs/social/config/datastore/dsrp/schema/init-schema.sql"/>
 				<exec executable="curl">
 					<arg line="-u admin:${demo.admin.password}"/>
-					<arg line="-s -o '${dist}/rdb/init-schema.sql' http://${demo.host}:${demomachine.authorport}/libs/social/config/datastore/dsrp/schema/init-schema.sql"/>
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--output '${dist}/rdb/init-schema.sql'"/>
+					<arg line="http://${demo.host}:${demomachine.authorport}/libs/social/config/datastore/dsrp/schema/init-schema.sql"/>
 				</exec>
 				<replace file="${dist}/rdb/init-schema.sql" token="communities" value="${mysql.prefix}dsrp"/>
 				<echo message="Loading SQL file into internal MySQL server..."/>
@@ -5706,7 +5825,8 @@
 	<target name="bundle_restart">
 		<exec executable="curl">
 			<arg line="-u admin:${demo.admin.password}"/>
-			<arg line="-o '${logs}/${bundle.port}_bundles.json' http://${demo.host}:${bundle.port}/system/console/bundles.json"/>
+			<arg line="--output '${logs}/${bundle.port}_bundles.json'"/>
+			<arg line="http://${demo.host}:${bundle.port}/system/console/bundles.json"/>
 		</exec>
 		<loadfile property="bundle.list" srcFile="${logs}/${bundle.port}_bundles.json"/>
 		<propertyregex property="bundle.id" input="${bundle.list}" regexp="\{&quot;id&quot;:([0-9]+),&quot;name&quot;:&quot;${bundle.name}" select="\1"/>
@@ -6244,7 +6364,8 @@
 				<!-- Versions -->
 				<exec executable="curl">
 					<arg line="-u admin:${demo.admin.password}"/>
-					<arg line="-o '${validation}/build/${AdobeAEM.publishport}_${demo}_productinfo.json' http://${demo.host}:${AdobeAEM.publishport}/system/console/status-productinfo.json"/>
+					<arg line="--output '${validation}/build/${AdobeAEM.publishport}_${demo}_productinfo.json'"/>
+					<arg line="http://${demo.host}:${AdobeAEM.publishport}/system/console/status-productinfo.json"/>
 				</exec>
 				<java classname="com.adobe.aem.demomachine.RegExp" outputproperty="aem.version">
 					<arg line="-f '${validation}/build/${AdobeAEM.publishport}_${demo}_productinfo.json'"/>
@@ -6254,7 +6375,8 @@
 				</java>
 				<exec executable="curl">
 					<arg line="-u admin:${demo.admin.password}"/>
-					<arg line="-o '${validation}/build/${AdobeAEM.publishport}_${demo}_packages.json' http://${demo.host}:${AdobeAEM.publishport}/crx/packmgr/list.jsp"/>
+					<arg line="--output '${validation}/build/${AdobeAEM.publishport}_${demo}_packages.json'"/>
+					<arg line="http://${demo.host}:${AdobeAEM.publishport}/crx/packmgr/list.jsp"/>
 				</exec>
 				<java classname="com.adobe.aem.demomachine.RegExp" outputproperty="soco.version.zip">
 					<arg line="-f '${validation}/build/${AdobeAEM.publishport}_${demo}_packages.json'"/>
@@ -6272,7 +6394,8 @@
 				<propertyregex property="scorm.version" input="${scorm.version.zip}" regexp="([0-9.]+)" select="\1" defaultValue="n/a"/>
 				<exec executable="curl">
 					<arg line="-u admin:${demo.admin.password}"/>
-					<arg line="-o '${validation}/build/${AdobeAEM.publishport}_${demo}_bundles.html' http://${demo.host}:${AdobeAEM.publishport}/system/console/bundles"/>
+					<arg line="--output '${validation}/build/${AdobeAEM.publishport}_${demo}_bundles.html'"/>
+					<arg line="http://${demo.host}:${AdobeAEM.publishport}/system/console/bundles"/>
 				</exec>
 				<loadfile property="bundles.list" srcFile="${validation}/build/${AdobeAEM.publishport}_${demo}_bundles.html"/>
 				<propertyregex property="oak.version" input="${bundles.list}" regexp="version&quot;:&quot;([a-zA-Z0-9.]+)&quot;,&quot;symbolicName&quot;:&quot;org.apache.jackrabbit.oak-core" select="\1"/>
