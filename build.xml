@@ -1934,7 +1934,8 @@
 				<echo message="Connecting to Adobe Package Share with ID: ${AdobeID.user}"/>
 				<mkdir dir="${logs}"/>
 				<delete file="${logs}/download_packageshare.html"/>
-				<exec executable="curl">
+				<exec executable="curl" spawn="true">
+					<!--<arg line="${defaultCurlOptions}"/>-->
 					<arg line="--output '${logs}/download_packageshare.html'"/>
 					<arg line="--cookie-jar '${logs}/packageshare.txt'"/>
 					<arg line="--insecure"/>
@@ -1977,7 +1978,8 @@
 				<echo message="Download ${packageShareFileName}.zip (${fileversion}) in progress, please wait until build is successful"/>
 				<basename property="packagename" file="${filepath}"/>
 				<!-- Automatic EULA acceptance -->
-				<exec executable="curl">
+				<exec executable="curl" spawn="true">
+					<arg line="${defaultCurlOptions}"/>
 					<arg line="--output '${logs}/download_packageshare_eula.html'"/>
 					<arg line="--cookie '${logs}/packageshare.txt'"/>
 					<arg line="--insecure"/>
@@ -2009,7 +2011,6 @@
 					</else>
 				</if>
 				<exec executable="curl" resultproperty="curlResult" outputproperty="curlOutput">
-					<redirector output="con" alwayslog="true"/>
 					<arg line="--continue-at -"/>
 					<arg line="${defaultCurlOptions}"/>
 					<arg line="--time-cond '${finishPlace}'"/>
