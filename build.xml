@@ -1842,7 +1842,9 @@
 		<propertyregex property="confirmCode" input="${googleFile}" regexp="confirm=([-a-zA-Z0-9_]*)" select="\1"/>
 		<echo message="Download in progress, please wait until build is successful"/>
 		<exec executable="curl">
+			<arg line="--continue-at -"/>
 			<arg line="${defaultCurlOptions}"/>
+			<arg line="--time-cond '${dist}/downloads/${google.file}.zip'"/>
 			<arg line="--cookie '${dist}/downloads/google.txt'"/>
 			<arg line="--output '${dist}/downloads/${google.file}.zip'"/>
 			<arg line="https://drive.google.com/uc?export=download&amp;confirm=${confirmCode}&amp;id=${google.id}"/>
