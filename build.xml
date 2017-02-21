@@ -60,7 +60,15 @@
 		<if>
 			<equals arg1="${onlyNew}" arg2="true"/>
 			<then>
-				<var name="curlOptions" value="${curlOptions} --time-cond '${finishPlace}'"/>
+				<if>
+					<isset property="${finishPlace}"/>
+					<then>
+						<var name="curlOptions" value="${curlOptions} --time-cond '${finishPlace}'"/>
+					</then>
+					<else>
+						<var name="curlOptions" value="${curlOptions} --time-cond '${temporaryPlace}'"/>
+					</else>
+				</if>
 			</then>
 		</if>
 		<if>
@@ -101,7 +109,13 @@
 						<file file="${temporaryPlace}"/>
 					</resourceexists>
 					<then>
-						<move file="${temporaryPlace}" tofile="${finishPlace}" overwrite="true"/>
+						<if>
+							<isset property="${finishPlace}"/>
+							<then>
+								<move file="${temporaryPlace}" tofile="${finishPlace}" overwrite="true"/>
+							</then>
+						</if>
+						<echo message="File downloaded successfully!"/>
 					</then>
 					<else>
 						<if>
@@ -1933,14 +1947,15 @@
 		<loadfile property="googleFile" srcFile="${dist}/downloads/google.html"/>
 		<propertyregex property="confirmCode" input="${googleFile}" regexp="confirm=([-a-zA-Z0-9_]*)" select="\1"/>
 		<echo message="Download in progress, please wait until build is successful"/>
-		<exec executable="curl">
-			<arg line="--continue-at -"/>
-			<arg line="${defaultCurlOptions}"/>
-			<arg line="--time-cond '${dist}/downloads/${google.file}.zip'"/>
-			<arg line="--cookie '${dist}/downloads/google.txt'"/>
-			<arg line="--output '${dist}/downloads/${google.file}.zip'"/>
-			<arg line="https://drive.google.com/uc?export=download&amp;confirm=${confirmCode}&amp;id=${google.id}"/>
-		</exec>
+		<antcall target="download_curl">
+			<param name="withContinue" value="true"/>
+			<!-- Google Drive doesn't support file timestamps -->
+			<param name="onlyNew" value="false"/>
+			<param name="noStopIfError" value="false"/>
+			<param name="cookieFile" value="${dist}/downloads/google.txt"/>
+			<param name="temporaryPlace" value="${dist}/downloads/${google.file}.zip"/>
+			<param name="downloadUrl" value="https://drive.google.com/uc?export=download&amp;confirm=${confirmCode}&amp;id=${google.id}"/>
+		</antcall>
 		<delete file="${dist}/downloads/google.txt"/>
 		<delete file="${dist}/downloads/google.html"/>
 	</target>
@@ -2030,85 +2045,85 @@
 		</antcall>
 	</target>
 	<target name="download_packageshare_file">
-		<echo message="Connecting to Adobe Package Share with ID: ${AdobeID.user}"/>
-		<mkdir dir="${logs}"/>
-		<delete file="${logs}/download_packageshare.html"/>
-		<exec executable="curl" spawn="true">
-			<!--<arg line="${defaultCurlOptions}"/>-->
-			<arg line="--output '${logs}/download_packageshare.html'"/>
-			<arg line="--cookie-jar '${logs}/packageshare.txt'"/>
-			<arg line="--insecure"/>
-			<arg line="-X POST"/>
-			<arg line="-d j_validate=true"/>
-			<arg line="-d j_username=${AdobeID.user}"/>
-			<arg line="--data-urlencode j_password='${AdobeID.password}'"/>
-			<arg line="https://www.adobeaemcloud.com/content/login/j_security_check"/>
-		</exec>
-		<if>
-			<and>
-				<resourceexists>
-					<file file="${logs}/download_packageshare.html"/>
-				</resourceexists>
-				<resourcecontains resource="${logs}/download_packageshare.html" substring="do not match"/>
-			</and>
-			<then>
-				<fail message="There was a problem connecting to PackageShare. Please verify AdobeID.user and AdobeID.password properties."/>
-			</then>
-		</if>
-		<propertycopy property="filepath" from="${packageshare.filepath}"/>
-		<propertycopy property="fileversion" from="${packageshare.version}"/>
-		<mkdir dir="${packageshare.target}/${fileversion}"/>
-		<echo message="Download in progress, please wait until it is complete"/>
-		<exec executable="curl">
-			<arg line="${defaultCurlOptions}"/>
-			<arg line="--insecure"/>
-			<arg line="--cookie '${logs}/packageshare.txt'"/>
-			<arg line="--output '${logs}/packageshare.html'"/>
-			<arg line="https://www.adobeaemcloud.com/content/marketplace/marketplaceProxy.html?packagePath=${filepath}"/>
-		</exec>
-		<if>
-			<resourcecontains resource="${logs}/packageshare.html" substring="an error occurred while processing your request"/>
-			<then>
-				<fail message="There was a problem downloading a package from PackageShare. Please verify the download properties ${filepath}."/>
-			</then>
-		</if>
-		<loadfile property="packageShareFile" srcFile="${logs}/packageshare.html"/>
-		<propertyregex property="packageShareFileName" input="${packageShareFile}" regexp="/file.res/([-a-zA-Z0-9_\\.]*).zip\&quot;;" select="\1"/>
-		<echo message="Download ${packageShareFileName}.zip (${fileversion}) in progress, please wait until build is successful"/>
-		<basename property="packagename" file="${filepath}"/>
-		<!-- Automatic EULA acceptance -->
-		<exec executable="curl" spawn="true">
-			<arg line="${defaultCurlOptions}"/>
-			<arg line="--output '${logs}/download_packageshare_eula.html'"/>
-			<arg line="--cookie '${logs}/packageshare.txt'"/>
-			<arg line="--insecure"/>
-			<arg line="-X POST"/>
-			<arg line="-d acceptEula=on"/>
-			<arg line="-d cmd=eula"/>
-			<arg line="-d package=${packagename}"/>
-			<arg line="https://www.adobeaemcloud.com/apps/cloudmgr/content/packages/user.json"/>
-		</exec>
-		<mkdir dir="${dist}/downloads"/>
+				<echo message="Connecting to Adobe Package Share with ID: ${AdobeID.user}"/>
+				<mkdir dir="${logs}"/>
+				<delete file="${logs}/download_packageshare.html"/>
+				<exec executable="curl" spawn="true">
+					<!--<arg line="${defaultCurlOptions}"/>-->
+					<arg line="--output '${logs}/download_packageshare.html'"/>
+					<arg line="--cookie-jar '${logs}/packageshare.txt'"/>
+					<arg line="--insecure"/>
+					<arg line="-X POST"/>
+					<arg line="-d j_validate=true"/>
+					<arg line="-d j_username=${AdobeID.user}"/>
+					<arg line="--data-urlencode j_password='${AdobeID.password}'"/>
+					<arg line="https://www.adobeaemcloud.com/content/login/j_security_check"/>
+				</exec>
+				<if>
+					<and>
+						<resourceexists>
+							<file file="${logs}/download_packageshare.html"/>
+						</resourceexists>
+						<resourcecontains resource="${logs}/download_packageshare.html" substring="do not match"/>
+					</and>
+					<then>
+						<fail message="There was a problem connecting to PackageShare. Please verify AdobeID.user and AdobeID.password properties."/>
+					</then>
+				</if>
+				<propertycopy property="filepath" from="${packageshare.filepath}"/>
+				<propertycopy property="fileversion" from="${packageshare.version}"/>
+				<mkdir dir="${packageshare.target}/${fileversion}"/>
+				<echo message="Download in progress, please wait until it is complete"/>
+				<exec executable="curl">
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--insecure"/>
+					<arg line="--cookie '${logs}/packageshare.txt'"/>
+					<arg line="--output '${logs}/packageshare.html'"/>
+					<arg line="https://www.adobeaemcloud.com/content/marketplace/marketplaceProxy.html?packagePath=${filepath}"/>
+				</exec>
+				<if>
+					<resourcecontains resource="${logs}/packageshare.html" substring="an error occurred while processing your request"/>
+					<then>
+						<fail message="There was a problem downloading a package from PackageShare. Please verify the download properties ${filepath}."/>
+					</then>
+				</if>
+				<loadfile property="packageShareFile" srcFile="${logs}/packageshare.html"/>
+				<propertyregex property="packageShareFileName" input="${packageShareFile}" regexp="/file.res/([-a-zA-Z0-9_\\.]*).zip\&quot;;" select="\1"/>
+				<echo message="Download ${packageShareFileName}.zip (${fileversion}) in progress, please wait until build is successful"/>
+				<basename property="packagename" file="${filepath}"/>
+				<!-- Automatic EULA acceptance -->
+				<exec executable="curl" spawn="true">
+					<arg line="${defaultCurlOptions}"/>
+					<arg line="--output '${logs}/download_packageshare_eula.html'"/>
+					<arg line="--cookie '${logs}/packageshare.txt'"/>
+					<arg line="--insecure"/>
+					<arg line="-X POST"/>
+					<arg line="-d acceptEula=on"/>
+					<arg line="-d cmd=eula"/>
+					<arg line="-d package=${packagename}"/>
+					<arg line="https://www.adobeaemcloud.com/apps/cloudmgr/content/packages/user.json"/>
+				</exec>
+				<mkdir dir="${dist}/downloads"/>
 
-		<property name="downloadUrl"
-				  value="https://www.adobeaemcloud.com${filepath}/jcr:content/package/file.res/${packageShareFileName}.zip"/>
-		<property name="temporaryPlace" value="${dist}/downloads/${packageShareFileName}.zip"/>
-		<if>
-			<and>
-				<isset property="${packageshare.filename}"/>
-				<not>
-					<equals arg1="${packageshare.filename}" arg2=""/>
-				</not>
-			</and>
-			<then>
-				<propertycopy property="filename" from="${packageshare.filename}"/>
-				<property name="finishPlace" value="${packageshare.target}/${fileversion}/${filename}"/>
-			</then>
-			<else>
-				<property name="finishPlace"
-						  value="${packageshare.target}/${fileversion}/${packageShareFileName}.zip"/>
-			</else>
-		</if>
+				<property name="downloadUrl"
+						  value="https://www.adobeaemcloud.com${filepath}/jcr:content/package/file.res/${packageShareFileName}.zip"/>
+				<property name="temporaryPlace" value="${dist}/downloads/${packageShareFileName}.zip"/>
+				<if>
+					<and>
+						<isset property="${packageshare.filename}"/>
+						<not>
+							<equals arg1="${packageshare.filename}" arg2=""/>
+						</not>
+					</and>
+					<then>
+						<propertycopy property="filename" from="${packageshare.filename}"/>
+						<property name="finishPlace" value="${packageshare.target}/${fileversion}/${filename}"/>
+					</then>
+					<else>
+						<property name="finishPlace"
+								  value="${packageshare.target}/${fileversion}/${packageShareFileName}.zip"/>
+					</else>
+				</if>
 		<antcall target="download_curl">
 			<param name="withContinue" value="true"/>
 			<param name="onlyNew" value="true"/>
@@ -2579,7 +2594,7 @@
 			<then>
 				<fail message="Please install the Adobe-only properties before using this feature (Search for AEM Demo Machine in Adobe's Wiki for further instructions)"/>
 			</then>
-		</if>
+		</if>		
 	</target>
 	<!-- Target for installing the FFMPEG software -->
 	<target name="install_ffmpeg" if="isMac">
