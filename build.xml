@@ -22,7 +22,7 @@
 	<property name="archives" location="./archives"/>
 	<property name="bin" location="./bin"/>
 	<!-- Default options for curl command execution -->
-	<property name="defaultCurlOptions" value="--remote-time --location --silent --show-error --compressed"/>
+	<property name="defaultCurlOptions" value="--remote-time --location --silent --fail --show-error --compressed"/>
 	<!-- This file requires the ant-contrib-1.0b3.jar file to be in the ant/lib folder -->
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
 	<description>
@@ -47,6 +47,112 @@
 		</fileset>
 		<pathelement location="${java}/bin"/>
 	</path>
+
+	<!-- Private targets -->
+	<target name="download_curl" description="Download one file using curl.">
+		<var name="curlOptions" value=""/>
+		<if>
+			<equals arg1="${withContinue}" arg2="true"/>
+			<then>
+				<var name="curlOptions" value="${curlOptions} --continue-at -"/>
+			</then>
+		</if>
+		<if>
+			<equals arg1="${onlyNew}" arg2="true"/>
+			<then>
+				<if>
+					<isset property="${finishPlace}"/>
+					<then>
+						<var name="curlOptions" value="${curlOptions} --time-cond '${finishPlace}'"/>
+					</then>
+					<else>
+						<var name="curlOptions" value="${curlOptions} --time-cond '${temporaryPlace}'"/>
+					</else>
+				</if>
+			</then>
+		</if>
+		<if>
+			<isset property="${appendArgs}"/>
+			<then>
+				<var name="curlOptions" value="${curlOptions} ${appendArgs}"/>
+			</then>
+		</if>
+		<if>
+			<isset property="${cookieFile}"/>
+			<then>
+				<var name="curlOptions" value="${curlOptions} --cookie '${cookieFile}'"/>
+			</then>
+		</if>
+
+		<var name="curlOptions" value="${curlOptions} --output '${temporaryPlace}'"/>
+		<var name="curlOptions" value="${curlOptions} ${downloadUrl}"/>
+
+		<echo message="DEBUG - curl options: ${defaultCurlOptions} ${curlOptions}"/>
+		<exec executable="curl" resultproperty="curlResult" outputproperty="curlOutput">
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="${curlOptions}"/>
+		</exec>
+
+		<if>
+			<or>
+				<!-- No errors -->
+				<equals arg1="${curlResult}" arg2="0"/>
+				<and>
+					<equals arg1="${onlyNew}" arg2="true"/>
+					<!-- Hasn't been downloaded previously (-z (time-cond) param) -->
+					<equals arg1="${curlResult}" arg2="33"/>
+				</and>
+			</or>
+			<then>
+				<if>
+					<resourceexists>
+						<file file="${temporaryPlace}"/>
+					</resourceexists>
+					<then>
+						<if>
+							<isset property="${finishPlace}"/>
+							<then>
+								<move file="${temporaryPlace}" tofile="${finishPlace}" overwrite="true"/>
+							</then>
+						</if>
+						<echo message="File downloaded successfully!"/>
+					</then>
+					<else>
+						<if>
+							<!-- Hasn't been downloaded recently (-z param) -->
+							<equals arg1="${curlResult}" arg2="33"/>
+							<then>
+								<if>
+									<equals arg1="${noStopIfError}" arg2="true"/>
+									<then>
+										<echo message="Error while downloading the file: ${curlOutput}"/>
+									</then>
+									<else>
+										<fail message="Error while downloading the file: ${curlOutput}"/>
+									</else>
+								</if>
+							</then>
+							<else>
+								<echo message="File hasn't been downloaded - you do have latest version."/>
+							</else>
+						</if>
+					</else>
+				</if>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${noStopIfError}" arg2="true"/>
+					<then>
+						<echo message="Error while downloading the file: ${curlOutput}"/>
+					</then>
+					<else>
+						<fail message="Error while downloading the file: ${curlOutput}"/>
+					</else>
+				</if>
+			</else>
+		</if>
+	</target>
+
 	<!-- Target for creating a new demo environment out of the demo.addon properties -->
 	<target name="create">
 		<antcall target="install"/>
@@ -1841,14 +1947,15 @@
 		<loadfile property="googleFile" srcFile="${dist}/downloads/google.html"/>
 		<propertyregex property="confirmCode" input="${googleFile}" regexp="confirm=([-a-zA-Z0-9_]*)" select="\1"/>
 		<echo message="Download in progress, please wait until build is successful"/>
-		<exec executable="curl">
-			<arg line="--continue-at -"/>
-			<arg line="${defaultCurlOptions}"/>
-			<arg line="--time-cond '${dist}/downloads/${google.file}.zip'"/>
-			<arg line="--cookie '${dist}/downloads/google.txt'"/>
-			<arg line="--output '${dist}/downloads/${google.file}.zip'"/>
-			<arg line="https://drive.google.com/uc?export=download&amp;confirm=${confirmCode}&amp;id=${google.id}"/>
-		</exec>
+		<antcall target="download_curl">
+			<param name="withContinue" value="true"/>
+			<!-- Google Drive doesn't support file timestamps -->
+			<param name="onlyNew" value="false"/>
+			<param name="noStopIfError" value="false"/>
+			<param name="cookieFile" value="${dist}/downloads/google.txt"/>
+			<param name="temporaryPlace" value="${dist}/downloads/${google.file}.zip"/>
+			<param name="downloadUrl" value="https://drive.google.com/uc?export=download&amp;confirm=${confirmCode}&amp;id=${google.id}"/>
+		</antcall>
 		<delete file="${dist}/downloads/google.txt"/>
 		<delete file="${dist}/downloads/google.html"/>
 	</target>
@@ -1914,14 +2021,7 @@
 			</else>
 		</if>
 	</target>
-	<target name="download_packageshare_item">
-		<antcall target="download_packageshare_file">
-			<param name="packageshare.filepath" value="demo.download.${packageshare.capability}.${packageshare.id}.core"/>
-			<param name="packageshare.version" value="demo.download.${packageshare.capability}.${packageshare.id}.version"/>
-			<param name="packageshare.filename" value="demo.download.${packageshare.capability}.${packageshare.id}.name"/>
-		</antcall>
-	</target>
-	<target name="download_packageshare_file">
+	<target name="download_packageshare_prereqs">
 		<if>
 			<or>
 				<equals arg1="${AdobeID.user}" arg2="" casesensitive="false"/>
@@ -1932,7 +2032,19 @@
 			<then>
 				<fail message="Please configure your Adobe ID and password to download from Package Share (AdobeID.user and AdobeID.password properties)"/>
 			</then>
-			<else>
+		</if>
+	</target>
+	<target name="download_packageshare_item" depends="download_packageshare_prereqs">
+		<antcall target="download_packageshare_file">
+			<param name="packageshare.filepath"
+				   value="demo.download.${packageshare.capability}.${packageshare.id}.core"/>
+			<param name="packageshare.version"
+				   value="demo.download.${packageshare.capability}.${packageshare.id}.version"/>
+			<param name="packageshare.filename"
+				   value="demo.download.${packageshare.capability}.${packageshare.id}.name"/>
+		</antcall>
+	</target>
+	<target name="download_packageshare_file">
 				<echo message="Connecting to Adobe Package Share with ID: ${AdobeID.user}"/>
 				<mkdir dir="${logs}"/>
 				<delete file="${logs}/download_packageshare.html"/>
@@ -2012,49 +2124,15 @@
 								  value="${packageshare.target}/${fileversion}/${packageShareFileName}.zip"/>
 					</else>
 				</if>
-				<exec executable="curl" resultproperty="curlResult" outputproperty="curlOutput">
-					<arg line="--continue-at -"/>
-					<arg line="${defaultCurlOptions}"/>
-					<arg line="--time-cond '${finishPlace}'"/>
-					<arg line="--cookie '${logs}/packageshare.txt'"/>
-					<arg line="--output '${temporaryPlace}'"/>
-					<arg line="${downloadUrl}"/>
-				</exec>
-				<if>
-					<or>
-						<!-- No errors -->
-						<equals arg1="${curlResult}" arg2="0"/>
-						<!-- Hasn't been downloaded recently (-z param) -->
-						<equals arg1="${curlResult}" arg2="33"/>
-					</or>
-					<then>
-						<if>
-							<resourceexists>
-								<file file="${temporaryPlace}"/>
-							</resourceexists>
-							<then>
-								<move file="${temporaryPlace}" tofile="${finishPlace}" overwrite="true"/>
-							</then>
-							<else>
-								<if>
-									<!-- Hasn't been downloaded recently (-z param) -->
-									<equals arg1="${curlResult}" arg2="33"/>
-									<then>
-										<fail message="Error while downloading the file: ${curlOutput}"/>
-									</then>
-									<else>
-										<echo message="File hasn't been downloaded - you do have latest version."/>
-									</else>
-								</if>
-							</else>
-						</if>
-					</then>
-					<else>
-						<fail message="Error while downloading the file: ${curlOutput}"/>
-					</else>
-				</if>
-			</else>
-		</if>
+		<antcall target="download_curl">
+			<param name="withContinue" value="true"/>
+			<param name="onlyNew" value="true"/>
+			<param name="noStopIfError" value="false"/>
+			<param name="cookieFile" value="${logs}/packageshare.txt"/>
+			<param name="temporaryPlace" value="${temporaryPlace}"/>
+			<param name="finishPlace" value="${finishPlace}"/>
+			<param name="downloadUrl" value="${downloadUrl}"/>
+		</antcall>
 	</target>
 	<!-- Target for downloading the latest AEM load  -->
 	<target name="download_load" depends="download_prereqs">
@@ -2344,15 +2422,17 @@
 		<mkdir dir="${dist}/acs/${this.version}"/>
 		<basename property="this.name" file="${this.filepath}"/>
 		<echo message="Downloading ${this.name}"/>
-		<exec executable="curl">
-			<arg line="--continue-at -"/>
-			<arg line="${defaultCurlOptions}"/>
-			<arg line="--insecure"/>
-			<arg line="--cookie '${logs}/acs.txt'"/>
-			<arg line="--time-cond '${dist}/acs/${this.version}/${this.name}'"/>
-			<arg line="--output '${dist}/acs/${this.version}/${this.name}'"/>
-			<arg line="${this.filepath}"/>
-		</exec>
+		<antcall target="download_curl">
+			<!-- Github doesn't support continued downloads -->
+			<param name="withContinue" value="false"/>
+			<param name="onlyNew" value="true"/>
+			<param name="noStopIfError" value="false"/>
+			<param name="cookieFile" value="${logs}/acs.txt"/>
+			<param name="temporaryPlace" value="${dist}/downloads/${this.name}"/>
+			<param name="finishPlace" value="${dist}/acs/${this.version}/${this.name}"/>
+			<param name="downloadUrl" value="${this.filepath}"/>
+			<param name="appendArgs" value="--insecure"/>
+		</antcall>
 	</target>
 	<!-- Target for downloading the OSGI commons -->
 	<target name="download_osgi">
