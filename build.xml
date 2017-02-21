@@ -61,7 +61,7 @@
 			<equals arg1="${onlyNew}" arg2="true"/>
 			<then>
 				<if>
-					<isset property="${finishPlace}"/>
+					<isset property="finishPlace"/>
 					<then>
 						<var name="curlOptions" value="${curlOptions} --time-cond '${finishPlace}'"/>
 					</then>
@@ -72,13 +72,13 @@
 			</then>
 		</if>
 		<if>
-			<isset property="${appendArgs}"/>
+			<isset property="appendArgs"/>
 			<then>
 				<var name="curlOptions" value="${curlOptions} ${appendArgs}"/>
 			</then>
 		</if>
 		<if>
-			<isset property="${cookieFile}"/>
+			<isset property="cookieFile"/>
 			<then>
 				<var name="curlOptions" value="${curlOptions} --cookie '${cookieFile}'"/>
 			</then>
@@ -110,7 +110,7 @@
 					</resourceexists>
 					<then>
 						<if>
-							<isset property="${finishPlace}"/>
+							<isset property="finishPlace"/>
 							<then>
 								<move file="${temporaryPlace}" tofile="${finishPlace}" overwrite="true"/>
 							</then>
@@ -2110,7 +2110,7 @@
 				<property name="temporaryPlace" value="${dist}/downloads/${packageShareFileName}.zip"/>
 				<if>
 					<and>
-						<isset property="${packageshare.filename}"/>
+						<isset property="packageshare.filename"/>
 						<not>
 							<equals arg1="${packageshare.filename}" arg2=""/>
 						</not>
