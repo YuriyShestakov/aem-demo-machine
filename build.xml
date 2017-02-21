@@ -22,7 +22,7 @@
 	<property name="archives" location="./archives"/>
 	<property name="bin" location="./bin"/>
 	<!-- Default options for curl command execution -->
-	<property name="defaultCurlOptions" value="--remote-time --location --silent --show-error --compressed"/>
+	<property name="defaultCurlOptions" value="--remote-time --location --silent --fail --show-error --compressed"/>
 	<!-- This file requires the ant-contrib-1.0b3.jar file to be in the ant/lib folder -->
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
 	<description>
@@ -47,6 +47,98 @@
 		</fileset>
 		<pathelement location="${java}/bin"/>
 	</path>
+
+	<!-- Private targets -->
+	<target name="download_curl" description="Download one file using curl.">
+		<var name="curlOptions" value=""/>
+		<if>
+			<equals arg1="${withContinue}" arg2="true"/>
+			<then>
+				<var name="curlOptions" value="${curlOptions} --continue-at -"/>
+			</then>
+		</if>
+		<if>
+			<equals arg1="${onlyNew}" arg2="true"/>
+			<then>
+				<var name="curlOptions" value="${curlOptions} --time-cond '${finishPlace}'"/>
+			</then>
+		</if>
+		<if>
+			<isset property="${appendArgs}"/>
+			<then>
+				<var name="curlOptions" value="${curlOptions} ${appendArgs}"/>
+			</then>
+		</if>
+		<if>
+			<isset property="${cookieFile}"/>
+			<then>
+				<var name="curlOptions" value="${curlOptions} --cookie '${cookieFile}'"/>
+			</then>
+		</if>
+
+		<var name="curlOptions" value="${curlOptions} --output '${temporaryPlace}'"/>
+		<var name="curlOptions" value="${curlOptions} ${downloadUrl}"/>
+
+		<echo message="DEBUG - curl options: ${defaultCurlOptions} ${curlOptions}"/>
+		<exec executable="curl" resultproperty="curlResult" outputproperty="curlOutput">
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="${curlOptions}"/>
+		</exec>
+
+		<if>
+			<or>
+				<!-- No errors -->
+				<equals arg1="${curlResult}" arg2="0"/>
+				<and>
+					<equals arg1="${onlyNew}" arg2="true"/>
+					<!-- Hasn't been downloaded previously (-z (time-cond) param) -->
+					<equals arg1="${curlResult}" arg2="33"/>
+				</and>
+			</or>
+			<then>
+				<if>
+					<resourceexists>
+						<file file="${temporaryPlace}"/>
+					</resourceexists>
+					<then>
+						<move file="${temporaryPlace}" tofile="${finishPlace}" overwrite="true"/>
+					</then>
+					<else>
+						<if>
+							<!-- Hasn't been downloaded recently (-z param) -->
+							<equals arg1="${curlResult}" arg2="33"/>
+							<then>
+								<if>
+									<equals arg1="${noStopIfError}" arg2="true"/>
+									<then>
+										<echo message="Error while downloading the file: ${curlOutput}"/>
+									</then>
+									<else>
+										<fail message="Error while downloading the file: ${curlOutput}"/>
+									</else>
+								</if>
+							</then>
+							<else>
+								<echo message="File hasn't been downloaded - you do have latest version."/>
+							</else>
+						</if>
+					</else>
+				</if>
+			</then>
+			<else>
+				<if>
+					<equals arg1="${noStopIfError}" arg2="true"/>
+					<then>
+						<echo message="Error while downloading the file: ${curlOutput}"/>
+					</then>
+					<else>
+						<fail message="Error while downloading the file: ${curlOutput}"/>
+					</else>
+				</if>
+			</else>
+		</if>
+	</target>
+
 	<!-- Target for creating a new demo environment out of the demo.addon properties -->
 	<target name="create">
 		<antcall target="install"/>
@@ -1914,14 +2006,7 @@
 			</else>
 		</if>
 	</target>
-	<target name="download_packageshare_item">
-		<antcall target="download_packageshare_file">
-			<param name="packageshare.filepath" value="demo.download.${packageshare.capability}.${packageshare.id}.core"/>
-			<param name="packageshare.version" value="demo.download.${packageshare.capability}.${packageshare.id}.version"/>
-			<param name="packageshare.filename" value="demo.download.${packageshare.capability}.${packageshare.id}.name"/>
-		</antcall>
-	</target>
-	<target name="download_packageshare_file">
+	<target name="download_packageshare_prereqs">
 		<if>
 			<or>
 				<equals arg1="${AdobeID.user}" arg2="" casesensitive="false"/>
@@ -1932,129 +2017,107 @@
 			<then>
 				<fail message="Please configure your Adobe ID and password to download from Package Share (AdobeID.user and AdobeID.password properties)"/>
 			</then>
-			<else>
-				<echo message="Connecting to Adobe Package Share with ID: ${AdobeID.user}"/>
-				<mkdir dir="${logs}"/>
-				<delete file="${logs}/download_packageshare.html"/>
-				<exec executable="curl" spawn="true">
-					<!--<arg line="${defaultCurlOptions}"/>-->
-					<arg line="--output '${logs}/download_packageshare.html'"/>
-					<arg line="--cookie-jar '${logs}/packageshare.txt'"/>
-					<arg line="--insecure"/>
-					<arg line="-X POST"/>
-					<arg line="-d j_validate=true"/>
-					<arg line="-d j_username=${AdobeID.user}"/>
-					<arg line="--data-urlencode j_password='${AdobeID.password}'"/>
-					<arg line="https://www.adobeaemcloud.com/content/login/j_security_check"/>
-				</exec>
-				<if>
-					<and>
-						<resourceexists>
-							<file file="${logs}/download_packageshare.html"/>
-						</resourceexists>
-						<resourcecontains resource="${logs}/download_packageshare.html" substring="do not match"/>
-					</and>
-					<then>
-						<fail message="There was a problem connecting to PackageShare. Please verify AdobeID.user and AdobeID.password properties."/>
-					</then>
-				</if>
-				<propertycopy property="filepath" from="${packageshare.filepath}"/>
-				<propertycopy property="fileversion" from="${packageshare.version}"/>
-				<mkdir dir="${packageshare.target}/${fileversion}"/>
-				<echo message="Download in progress, please wait until it is complete"/>
-				<exec executable="curl">
-					<arg line="${defaultCurlOptions}"/>
-					<arg line="--insecure"/>
-					<arg line="--cookie '${logs}/packageshare.txt'"/>
-					<arg line="--output '${logs}/packageshare.html'"/>
-					<arg line="https://www.adobeaemcloud.com/content/marketplace/marketplaceProxy.html?packagePath=${filepath}"/>
-				</exec>
-				<if>
-					<resourcecontains resource="${logs}/packageshare.html" substring="an error occurred while processing your request"/>
-					<then>
-						<fail message="There was a problem downloading a package from PackageShare. Please verify the download properties ${filepath}."/>
-					</then>
-				</if>
-				<loadfile property="packageShareFile" srcFile="${logs}/packageshare.html"/>
-				<propertyregex property="packageShareFileName" input="${packageShareFile}" regexp="/file.res/([-a-zA-Z0-9_\\.]*).zip\&quot;;" select="\1"/>
-				<echo message="Download ${packageShareFileName}.zip (${fileversion}) in progress, please wait until build is successful"/>
-				<basename property="packagename" file="${filepath}"/>
-				<!-- Automatic EULA acceptance -->
-				<exec executable="curl" spawn="true">
-					<arg line="${defaultCurlOptions}"/>
-					<arg line="--output '${logs}/download_packageshare_eula.html'"/>
-					<arg line="--cookie '${logs}/packageshare.txt'"/>
-					<arg line="--insecure"/>
-					<arg line="-X POST"/>
-					<arg line="-d acceptEula=on"/>
-					<arg line="-d cmd=eula"/>
-					<arg line="-d package=${packagename}"/>
-					<arg line="https://www.adobeaemcloud.com/apps/cloudmgr/content/packages/user.json"/>
-				</exec>
-				<mkdir dir="${dist}/downloads"/>
+		</if>
+	</target>
+	<target name="download_packageshare_item" depends="download_packageshare_prereqs">
+		<antcall target="download_packageshare_file">
+			<param name="packageshare.filepath"
+				   value="demo.download.${packageshare.capability}.${packageshare.id}.core"/>
+			<param name="packageshare.version"
+				   value="demo.download.${packageshare.capability}.${packageshare.id}.version"/>
+			<param name="packageshare.filename"
+				   value="demo.download.${packageshare.capability}.${packageshare.id}.name"/>
+		</antcall>
+	</target>
+	<target name="download_packageshare_file">
+		<echo message="Connecting to Adobe Package Share with ID: ${AdobeID.user}"/>
+		<mkdir dir="${logs}"/>
+		<delete file="${logs}/download_packageshare.html"/>
+		<exec executable="curl" spawn="true">
+			<!--<arg line="${defaultCurlOptions}"/>-->
+			<arg line="--output '${logs}/download_packageshare.html'"/>
+			<arg line="--cookie-jar '${logs}/packageshare.txt'"/>
+			<arg line="--insecure"/>
+			<arg line="-X POST"/>
+			<arg line="-d j_validate=true"/>
+			<arg line="-d j_username=${AdobeID.user}"/>
+			<arg line="--data-urlencode j_password='${AdobeID.password}'"/>
+			<arg line="https://www.adobeaemcloud.com/content/login/j_security_check"/>
+		</exec>
+		<if>
+			<and>
+				<resourceexists>
+					<file file="${logs}/download_packageshare.html"/>
+				</resourceexists>
+				<resourcecontains resource="${logs}/download_packageshare.html" substring="do not match"/>
+			</and>
+			<then>
+				<fail message="There was a problem connecting to PackageShare. Please verify AdobeID.user and AdobeID.password properties."/>
+			</then>
+		</if>
+		<propertycopy property="filepath" from="${packageshare.filepath}"/>
+		<propertycopy property="fileversion" from="${packageshare.version}"/>
+		<mkdir dir="${packageshare.target}/${fileversion}"/>
+		<echo message="Download in progress, please wait until it is complete"/>
+		<exec executable="curl">
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--insecure"/>
+			<arg line="--cookie '${logs}/packageshare.txt'"/>
+			<arg line="--output '${logs}/packageshare.html'"/>
+			<arg line="https://www.adobeaemcloud.com/content/marketplace/marketplaceProxy.html?packagePath=${filepath}"/>
+		</exec>
+		<if>
+			<resourcecontains resource="${logs}/packageshare.html" substring="an error occurred while processing your request"/>
+			<then>
+				<fail message="There was a problem downloading a package from PackageShare. Please verify the download properties ${filepath}."/>
+			</then>
+		</if>
+		<loadfile property="packageShareFile" srcFile="${logs}/packageshare.html"/>
+		<propertyregex property="packageShareFileName" input="${packageShareFile}" regexp="/file.res/([-a-zA-Z0-9_\\.]*).zip\&quot;;" select="\1"/>
+		<echo message="Download ${packageShareFileName}.zip (${fileversion}) in progress, please wait until build is successful"/>
+		<basename property="packagename" file="${filepath}"/>
+		<!-- Automatic EULA acceptance -->
+		<exec executable="curl" spawn="true">
+			<arg line="${defaultCurlOptions}"/>
+			<arg line="--output '${logs}/download_packageshare_eula.html'"/>
+			<arg line="--cookie '${logs}/packageshare.txt'"/>
+			<arg line="--insecure"/>
+			<arg line="-X POST"/>
+			<arg line="-d acceptEula=on"/>
+			<arg line="-d cmd=eula"/>
+			<arg line="-d package=${packagename}"/>
+			<arg line="https://www.adobeaemcloud.com/apps/cloudmgr/content/packages/user.json"/>
+		</exec>
+		<mkdir dir="${dist}/downloads"/>
 
-				<property name="downloadUrl"
-						  value="https://www.adobeaemcloud.com${filepath}/jcr:content/package/file.res/${packageShareFileName}.zip"/>
-				<property name="temporaryPlace" value="${dist}/downloads/${packageShareFileName}.zip"/>
-				<if>
-					<and>
-						<isset property="${packageshare.filename}"/>
-						<not>
-							<equals arg1="${packageshare.filename}" arg2=""/>
-						</not>
-					</and>
-					<then>
-						<propertycopy property="filename" from="${packageshare.filename}"/>
-						<property name="finishPlace" value="${packageshare.target}/${fileversion}/${filename}"/>
-					</then>
-					<else>
-						<property name="finishPlace"
-								  value="${packageshare.target}/${fileversion}/${packageShareFileName}.zip"/>
-					</else>
-				</if>
-				<exec executable="curl" resultproperty="curlResult" outputproperty="curlOutput">
-					<arg line="--continue-at -"/>
-					<arg line="${defaultCurlOptions}"/>
-					<arg line="--time-cond '${finishPlace}'"/>
-					<arg line="--cookie '${logs}/packageshare.txt'"/>
-					<arg line="--output '${temporaryPlace}'"/>
-					<arg line="${downloadUrl}"/>
-				</exec>
-				<if>
-					<or>
-						<!-- No errors -->
-						<equals arg1="${curlResult}" arg2="0"/>
-						<!-- Hasn't been downloaded recently (-z param) -->
-						<equals arg1="${curlResult}" arg2="33"/>
-					</or>
-					<then>
-						<if>
-							<resourceexists>
-								<file file="${temporaryPlace}"/>
-							</resourceexists>
-							<then>
-								<move file="${temporaryPlace}" tofile="${finishPlace}" overwrite="true"/>
-							</then>
-							<else>
-								<if>
-									<!-- Hasn't been downloaded recently (-z param) -->
-									<equals arg1="${curlResult}" arg2="33"/>
-									<then>
-										<fail message="Error while downloading the file: ${curlOutput}"/>
-									</then>
-									<else>
-										<echo message="File hasn't been downloaded - you do have latest version."/>
-									</else>
-								</if>
-							</else>
-						</if>
-					</then>
-					<else>
-						<fail message="Error while downloading the file: ${curlOutput}"/>
-					</else>
-				</if>
+		<property name="downloadUrl"
+				  value="https://www.adobeaemcloud.com${filepath}/jcr:content/package/file.res/${packageShareFileName}.zip"/>
+		<property name="temporaryPlace" value="${dist}/downloads/${packageShareFileName}.zip"/>
+		<if>
+			<and>
+				<isset property="${packageshare.filename}"/>
+				<not>
+					<equals arg1="${packageshare.filename}" arg2=""/>
+				</not>
+			</and>
+			<then>
+				<propertycopy property="filename" from="${packageshare.filename}"/>
+				<property name="finishPlace" value="${packageshare.target}/${fileversion}/${filename}"/>
+			</then>
+			<else>
+				<property name="finishPlace"
+						  value="${packageshare.target}/${fileversion}/${packageShareFileName}.zip"/>
 			</else>
 		</if>
+		<antcall target="download_curl">
+			<param name="withContinue" value="true"/>
+			<param name="onlyNew" value="true"/>
+			<param name="noStopIfError" value="false"/>
+			<param name="cookieFile" value="${logs}/packageshare.txt"/>
+			<param name="temporaryPlace" value="${temporaryPlace}"/>
+			<param name="finishPlace" value="${finishPlace}"/>
+			<param name="downloadUrl" value="${downloadUrl}"/>
+		</antcall>
 	</target>
 	<!-- Target for downloading the latest AEM load  -->
 	<target name="download_load" depends="download_prereqs">
@@ -2344,15 +2407,17 @@
 		<mkdir dir="${dist}/acs/${this.version}"/>
 		<basename property="this.name" file="${this.filepath}"/>
 		<echo message="Downloading ${this.name}"/>
-		<exec executable="curl">
-			<arg line="--continue-at -"/>
-			<arg line="${defaultCurlOptions}"/>
-			<arg line="--insecure"/>
-			<arg line="--cookie '${logs}/acs.txt'"/>
-			<arg line="--time-cond '${dist}/acs/${this.version}/${this.name}'"/>
-			<arg line="--output '${dist}/acs/${this.version}/${this.name}'"/>
-			<arg line="${this.filepath}"/>
-		</exec>
+		<antcall target="download_curl">
+			<!-- Github doesn't support continued downloads -->
+			<param name="withContinue" value="false"/>
+			<param name="onlyNew" value="true"/>
+			<param name="noStopIfError" value="false"/>
+			<param name="cookieFile" value="${logs}/acs.txt"/>
+			<param name="temporaryPlace" value="${dist}/downloads/${this.name}"/>
+			<param name="finishPlace" value="${dist}/acs/${this.version}/${this.name}"/>
+			<param name="downloadUrl" value="${this.filepath}"/>
+			<param name="appendArgs" value="--insecure"/>
+		</antcall>
 	</target>
 	<!-- Target for downloading the OSGI commons -->
 	<target name="download_osgi">
@@ -2514,7 +2579,7 @@
 			<then>
 				<fail message="Please install the Adobe-only properties before using this feature (Search for AEM Demo Machine in Adobe's Wiki for further instructions)"/>
 			</then>
-		</if>		
+		</if>
 	</target>
 	<!-- Target for installing the FFMPEG software -->
 	<target name="install_ffmpeg" if="isMac">
