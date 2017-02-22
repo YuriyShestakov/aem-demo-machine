@@ -33,6 +33,10 @@ pom.xml.versionsBackup
 cq5dam.*
 generated
 
+# Links
+*.lnk
+*.desktop
+
 # User's additional properties
 conf/build*.properties
 # Configured demo machines
